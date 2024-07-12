@@ -3,6 +3,7 @@ import requests
 from typing import List
 import re
 from prettytable import PrettyTable
+
 # An instance of a fighter and their corresponding data
 
 class FighterData(object):
@@ -140,6 +141,8 @@ class FighterData(object):
             return events
         else:
             return []
+        
+    # Get record of the fighter, including their finish record
     
     def get_record(self) -> List[str]:
         records = self.history_soup.find_all('div', {'class' : 'StatBlockInner__Value tc fw-medium n2 clr-gray-02'}, limit=3)
@@ -148,6 +151,8 @@ class FighterData(object):
             for record in records:
                 record_texts.append(record.text)
         return record_texts
+    
+    # Get the name of the fighter
 
     def get_name(self) -> str:
         fighter_name_element = self.history_soup.find('h1', {'class': 'PlayerHeader__Name flex flex-column ttu fw-bold pr4 h2'})
