@@ -14,6 +14,7 @@ class FighterData(object):
         self.history_url = None
         self.name = None
         self.soup = None # Creating a beatifulSoup object
+        self.stats_soup = None
         self.history_soup = None
 
         self.stats_resource = None
@@ -162,6 +163,75 @@ class FighterData(object):
             fighter_name = 'Fighter Name Not Found'
         return fighter_name
 
+    # Get the striking stats of a fighter
+
+    def get_striking(self) -> tuple[List[str], List[List[str]]]:
+        tbody = self.soup.find_all('tbody', {'class' : 'Table__TBODY'})
+        striking_stats = []
+        striking_table = tbody[0]
+        table_row = striking_table.find_all('tr', {'class' : 'Table__TR Table__TR--sm Table__even'})
+        table_headings = self.soup.find_all('tr', {'class': 'Table__TR Table__even'})
+        table_heading = table_headings[0].find_all('th', {'class': 'Table__TH'})
+        headings = []
+        for index, heading in enumerate(table_heading):
+            if index >= 4:
+                headings.append(heading.text.strip())
+        for row in table_row:
+            stat_row = []
+            stat_value = row.find_all('td', {'class' : 'tar Table__TD'})
+            for stat in stat_value:
+                stat_row.append(stat.text)
+            striking_stats.append(stat_row)
+        return headings, striking_stats
+    
+    # Get the clinch stats of a fighter
+
+    def get_clinch(self) -> tuple[List[str], List[List[str]]]:
+        tbody = self.soup.find_all('tbody', {'class': 'Table__TBODY'})
+        clinch_stats = []
+        clinch_table = tbody[1]  # Use tbody[1] for clinch stats
+        table_row = clinch_table.find_all('tr', {'class': 'Table__TR Table__TR--sm Table__even'})
+        table_headings = self.soup.find_all('tr', {'class': 'Table__TR Table__even'})
+        table_heading = table_headings[1].find_all('th', {'class': 'Table__TH'})
+        
+        headings = []
+        for index, heading in enumerate(table_heading):
+            if index >= 4:
+                headings.append(heading.text.strip())
+
+        for row in table_row:
+            stat_row = []
+            stat_value = row.find_all('td', {'class': 'tar Table__TD'})
+            for stat in stat_value:
+                stat_row.append(stat.text)
+            clinch_stats.append(stat_row)
+
+        return headings, clinch_stats
+
+    # Get the ground stats of a fighter
+    
+    def get_ground(self) -> tuple[List[str], List[List[str]]]:
+        tbody = self.soup.find_all('tbody', {'class': 'Table__TBODY'})
+        ground_stats = []
+        ground_table = tbody[2]  # Use tbody[2] for ground stats
+        table_row = ground_table.find_all('tr', {'class': 'Table__TR Table__TR--sm Table__even'})
+        table_headings = self.soup.find_all('tr', {'class': 'Table__TR Table__even'})
+        table_heading = table_headings[2].find_all('th', {'class': 'Table__TH'})
+        headings = []
+        for index, heading in enumerate(table_heading):
+            if index >= 4:
+                headings.append(heading.text.strip())
+        for row in table_row:
+            stat_row = []
+            stat_value = row.find_all('td', {'class': 'tar Table__TD'})
+            for stat in stat_value:
+                stat_row.append(stat.text)
+            ground_stats.append(stat_row)
+        return headings, ground_stats
+
+
+
+
 def main() -> None:
     # Create an instance of the FighterData class
     fighter = FighterData()
@@ -229,6 +299,104 @@ def main() -> None:
         table.add_row([opponent, result, method, end_round, time, event])
     
     print(table)
+
+    # Give option to choose what type of statistic they'd like
+
+    while True:
+        stat_type = input("Would you like stats for striking, clinch, or ground? (Type 'exit' to quit or 'glossary' for a glossary): ")
+        
+        if stat_type.lower() == "exit":
+            print("Exiting. Have a great day!")
+            break
+        elif stat_type.lower() == "striking":
+            striking_headings, striking_stats = fighter.get_striking()
+            # Create a table to show the striking statistics
+            striking_table = PrettyTable()
+            striking_table.field_names = striking_headings
+
+            for stat_row in striking_stats:
+                striking_table.add_row(stat_row)
+
+            print(striking_table)
+        elif stat_type.lower() == "clinch":
+            clinch_headings, clinch_stats = fighter.get_clinch()
+            # Create a table to show the clinch statistics
+            clinch_table = PrettyTable()
+            clinch_table.field_names = clinch_headings
+
+            for stat_row in clinch_stats:
+                clinch_table.add_row(stat_row)
+
+            print(clinch_table)
+        elif stat_type.lower() == "ground":
+            ground_headings, ground_stats = fighter.get_ground()
+            # Create a table to show the ground statistics
+            ground_table = PrettyTable()
+            ground_table.field_names = ground_headings
+
+            for stat_row in ground_stats:
+                ground_table.add_row(stat_row)
+            
+            print(ground_table)
+        elif stat_type.lower() == "glossary":
+            while True:
+                # Glossary of each heading
+                glossary_type = input("Would you like a glossary for striking, clinch, or ground? ")
+                if glossary_type.lower() == "striking":
+                    print("""
+                    Glossary for Striking:
+                    - %BODY: Target Breakdown Body
+                    - %HEAD: Target Breakdown Head
+                    - %LEG: Target Breakdown Leg
+                    - SDBL/A: Significant Distance Body Strikes Landed-Significant Distance Body Strike Attempts
+                    - SDHL/A:Significant Distance Head Strikes Landed-Significant Distance Head Strike Attempts
+                    - SDLL/A:Significant Distance Leg Strikes Landed-Significant Distance Leg Strike Attempts
+                    - TSL:Total Strikes Landed
+                    - TSA:Total Strikes Attempts
+                    - SSA:Significant Strikes Attempts
+                    - SSL:Significant Strikes Landed
+                    - TSL-TSA:Total Strikes Landed-Total Strikes Attempts
+                    - KD: Knockdowns
+                    """)
+                    break
+                elif glossary_type.lower() == "clinch":
+                    print("""
+                    Glossary:
+                    - SCBL: Significant Clinch Body Strikes Landed
+                    - SCBA: Significant Clinich Body Strike Attempts
+                    - SCHL: Significant Clinch Head Strikes Landed
+                    - SCHA: Significant Clinch Head Strike Attempts
+                    - SCLL: Significant Clinch Leg Strikes Landed
+                    - SCLA: Significant Clinch Leg Strike Attempts
+                    - RV: Reversals
+                    - SR: Slam Rate
+                    - TDL: Takedowns Landed
+                    - TDA: Takedowns Attempted
+                    - TDS: Takedowns Slams
+                    - TK ACC: Takedown Accuracy
+                    """)
+                    break
+                elif glossary_type.lower() == "ground":
+                    print("""
+                    Glossary for Ground:
+                    - SGBL: Significant Ground Body Strikes Landed
+                    - SGBA: Significant Ground Body Strike Attempts
+                    - SGHL: Significant Ground Head Strikes Landed
+                    - SGHA: Significant Ground Head Strike Attempts
+                    - SGLL: Significant Ground Leg Strikes Landed
+                    - SGLA: Significant Ground Leg Strikes Attempted
+                    - AD: Advances
+                    - ADTB: Advance To Back
+                    - ADHG: Advance To Half Guard
+                    - ADTM: Advance To Mount
+                    - ADTS: Advance To Side
+                    - SM: Submissions
+                    """)
+                    break
+                else:
+                    print("Invalid glossary type. Please choose 'striking', 'clinch', or 'ground'.")
+        else:
+            print("Invalid input. Please choose 'striking', 'clinch', or 'ground'.")
 
 if __name__ == "__main__":
     main()
