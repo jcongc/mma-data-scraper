@@ -60,15 +60,19 @@ Glossary for Ground:
 - SM: Submissions
 """
 
+
 def get_fighter_input():
     """Takes in the fighter ID"""
     user_input = input("Please enter a fighter id or their ESPN URL: ")
     return user_input
 
+
 def get_new_fighter():
     """Takes in new fighter ID"""
-    user_input = input("Please enter fighter id or their ESPN URL (Type 'b' to go back): ")
+    user_input = input(
+        "Please enter fighter id or their ESPN URL (Type 'b' to go back): ")
     return user_input
+
 
 def create_fighter_instance(user_input):
     """Creates an instance of a fighter"""
@@ -83,6 +87,7 @@ def create_fighter_instance(user_input):
     fighter.set_resource()
     fighter.set_soup()
     return fighter
+
 
 def print_fighter_info(fighter):
     """Prints the basic fighter information"""
@@ -112,6 +117,7 @@ def print_fighter_info(fighter):
             showindex=False,
             headers=fight_history_df.columns))
 
+
 def print_stat_type(fighter, stat_type):
     """Takes in an input of which type of statistic they'd like and prints it."""
     if stat_type.lower() == "s":
@@ -119,12 +125,20 @@ def print_stat_type(fighter, stat_type):
         striking_df = pd.DataFrame(striking_stats, columns=striking_headings)
         print("\n")
         print("Table of All Striking Stats")
-        print(tabulate(striking_df, showindex=False, headers=striking_headings))
+        print(
+            tabulate(
+                striking_df,
+                showindex=False,
+                headers=striking_headings))
         print("\n")
         avg_striking_df = pd.DataFrame(fighter.find_column_avg(striking_stats),
                                        index=striking_headings).T
         print("Average Striking Stats")
-        print(tabulate(avg_striking_df, showindex=False, headers=striking_headings))
+        print(
+            tabulate(
+                avg_striking_df,
+                showindex=False,
+                headers=striking_headings))
         print("\n")
     elif stat_type.lower() == "c":
         clinch_headings, clinch_stats = fighter.get_clinch()
@@ -133,9 +147,15 @@ def print_stat_type(fighter, stat_type):
         print("Table of All Clinch Stats")
         print(tabulate(clinch_df, showindex=False, headers=clinch_headings))
         print("\n")
-        avg_clinch_df = pd.DataFrame(fighter.find_column_avg(clinch_stats), index=clinch_headings).T
+        avg_clinch_df = pd.DataFrame(
+            fighter.find_column_avg(clinch_stats),
+            index=clinch_headings).T
         print("Average Clinch Stats")
-        print(tabulate(avg_clinch_df, showindex=False, headers=clinch_headings))
+        print(
+            tabulate(
+                avg_clinch_df,
+                showindex=False,
+                headers=clinch_headings))
         print("\n")
     elif stat_type.lower() == "g":
         ground_headings, ground_stats = fighter.get_ground()
@@ -144,9 +164,15 @@ def print_stat_type(fighter, stat_type):
         print("Table of All Ground Stats")
         print(tabulate(ground_df, showindex=False, headers=ground_headings))
         print("\n")
-        avg_ground_df = pd.DataFrame(fighter.find_column_avg(ground_stats), index=ground_headings).T
+        avg_ground_df = pd.DataFrame(
+            fighter.find_column_avg(ground_stats),
+            index=ground_headings).T
         print("Average Ground Stats")
-        print(tabulate(avg_ground_df, showindex=False, headers=ground_headings))
+        print(
+            tabulate(
+                avg_ground_df,
+                showindex=False,
+                headers=ground_headings))
         print("\n")
     elif stat_type.lower() == "gl":
         glossary_type = input(
@@ -174,6 +200,38 @@ def print_stat_type(fighter, stat_type):
             print(
                 "Invalid glossary type. Please choose 'striking', 'clinch', or 'ground'.")
 
+
+def compare_fighters(fighter, second_fighter):
+    """Compares two fighters and outputs a table comparing their statistics"""
+    stats_types = ['striking', 'ground', 'clinch']
+    comparisons = {}
+
+    for stat_type in stats_types:
+        fighter_stats = getattr(fighter, f'get_{stat_type}')()
+        second_fighter_stats = getattr(second_fighter, f'get_{stat_type}')()
+        avg_fighter_stats = pd.DataFrame(
+            second_fighter.find_column_avg(
+                fighter_stats[1]),
+            index=fighter_stats[0])
+        avg_second_fighter_stats = pd.DataFrame(
+            fighter.find_column_avg(
+                second_fighter_stats[1]),
+            index=second_fighter_stats[0])
+        comparison = avg_fighter_stats.compare(
+            avg_second_fighter_stats,
+            result_names=(
+                fighter.get_name(),
+                second_fighter.get_name()
+            )).droplevel(
+            0,
+            axis=1)
+        comparisons[stat_type] = comparison
+
+    for stat_type, comparison in comparisons.items():
+        print(f"\n{stat_type.capitalize()} Stats Comparison:")
+        print(tabulate(comparison, headers='keys', tablefmt='psql'))
+
+
 def main():
     """Main function which runs the script"""
     user_input = get_fighter_input()
@@ -189,6 +247,7 @@ def main():
             "'g' Ground stats\n"
             "'gl' - Glossary\n"
             "'cf' - Change Fighter\n"
+            "'cmp' - Compare Fighters\n"
             "'e' - Exit\n"
             "> "
         )
@@ -202,10 +261,18 @@ def main():
                 gc.collect()
                 fighter = create_fighter_instance(new_input)
                 print_fighter_info(fighter)
+        elif stat_type.lower() == "cmp":
+            compared_fighter = get_fighter_input()
+            second_fighter = create_fighter_instance(compared_fighter)
+            if second_fighter is None:
+                return
+            compare_fighters(fighter, second_fighter)
         elif stat_type.lower() not in ["s", "c", "g", "gl"]:
-            print("Invalid input. Please choose a valid stat type, 'glossary', or 'exit'.")
+            print(
+                "Invalid input. Please choose a valid stat type, 'glossary', or 'exit'.")
         else:
             print_stat_type(fighter, stat_type)
+
 
 if __name__ == "__main__":
     main()
